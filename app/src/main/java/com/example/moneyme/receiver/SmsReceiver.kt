@@ -1,5 +1,6 @@
 package com.example.moneyme.receiver
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -27,10 +28,12 @@ fun extractSms(intent: Intent): SmsData {
 
 
 class SmsReceiver : BroadcastReceiver() {
+    @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
         val sms = extractSms(intent)
         val amount = SmsParser.parseAmount(sms.body)
         if (SmsParser.isFromTrustedSender(sms.sender) && amount != null) {
+            Log.d("Received","here")
             SmsNotificationManager.showTransactionPrompt(context, sms.sender, amount, sms.body)
         }
     }

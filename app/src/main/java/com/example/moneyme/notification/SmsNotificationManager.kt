@@ -9,15 +9,18 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.example.moneyme.MainActivity
 import androidx.core.app.NotificationManagerCompat
-import com.example.moneyme.CHANNEL_ID
-import com.example.moneyme.NOTIFICATION_ID
+import com.example.moneyme.utils.CHANNEL_ID
 import com.example.moneyme.R
 
-object SmsNotificationManager{
+object SmsNotificationManager {
     fun showTransactionPrompt(context: Context, sender: String, amount: Double, body: String) {
         // Check notification permission for Android 13+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 // Permission not granted, don't show notification
                 return
             }
@@ -41,6 +44,7 @@ object SmsNotificationManager{
             .setAutoCancel(true)
             .build()
 
-        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+        val notificationId = System.currentTimeMillis().toInt()
+        NotificationManagerCompat.from(context).notify(notificationId, notification)
     }
 }

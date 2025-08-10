@@ -16,14 +16,19 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Telephony
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-
+import com.example.moneyme.presentation.navigation.AppNavHost
+import com.example.moneyme.presentation.navigation.Screen
+import com.example.moneyme.utils.CHANNEL_ID
 
 
 class MainActivity : ComponentActivity() {
+    private val DEFAULT_SMS_REQUEST_CODE = 456
     private val REQUIRED_PERMISSIONS = mutableListOf(
         Manifest.permission.READ_SMS,
         Manifest.permission.RECEIVE_SMS
@@ -64,38 +69,48 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun requestDefaultSmsApp() {
+        val myPackageName = packageName
+        val defaultSmsPackage = android.provider.Telephony.Sms.getDefaultSmsPackage(this)
+
+        if (defaultSmsPackage != myPackageName) {
+            val intent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT).apply {
+                putExtra(android.provider.Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, myPackageName)
+            }
+            startActivityForResult(intent, DEFAULT_SMS_REQUEST_CODE)
+        }
+    }
+
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestPermissionsIfNecessary()
         createNotificationChannel()
+        requestDefaultSmsApp()
+
+        // Handle notification click
+        val amount = intent.getDoubleExtra("amount", -1.0)
+        val smsBody = intent.getStringExtra("sms_body") ?: ""
+
+        val startDestination = if (amount != -1.0 && smsBody.isNotBlank()) {
+            Screen.Classify.withArgs(amount, smsBody)
+        } else {
+            Screen.Home.route
+        }
+
         enableEdgeToEdge()
         setContent {
+
             MoneyMeTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    AppNavHost(startDestination = startDestination, modifier = Modifier.padding(innerPadding))
+                    }
                 }
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MoneyMeTheme {
-        Greeting("Android")
-    }
-}
+
